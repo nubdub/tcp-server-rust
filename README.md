@@ -17,6 +17,7 @@ This project implements a basic TCP server that listens for incoming client conn
 ```
 rust-networking/
 ├── Cargo.toml           # Project metadata and dependencies
+├── Dockerfile           # Docker configuration for containerization
 ├── README.md            # This file
 └── src/
     ├── main.rs          # Entry point - initializes and starts the server
@@ -39,6 +40,8 @@ cargo build --release
 
 ## Running
 
+### Locally
+
 Start the server with:
 
 ```bash
@@ -50,6 +53,101 @@ The server will start listening on `127.0.0.1:8080`:
 ```
 Server listening on 127.0.0.1:8080
 ```
+
+### Using Docker
+
+#### Building the Docker Image
+
+Build the Docker image:
+
+```bash
+docker build -t rust-networking .
+```
+
+You can also specify a version tag:
+
+```bash
+docker build -t rust-networking:1.0 .
+```
+
+#### Running the Container
+
+Run the container with port mapping:
+
+```bash
+docker run -p 8080:8080 rust-networking
+```
+
+To run in detached mode (background):
+
+```bash
+docker run -d -p 8080:8080 --name rust-server rust-networking
+```
+
+To view logs from a running container:
+
+```bash
+docker logs rust-server
+```
+
+To stop the container:
+
+```bash
+docker stop rust-server
+```
+
+To remove the container:
+
+```bash
+docker rm rust-server
+```
+
+The server will be accessible on `localhost:8080` from your host machine.
+
+#### Dockerfile Overview
+
+The project uses a multi-stage Docker build:
+
+1. **Builder Stage** (`rust:latest`): Compiles the Rust project in release mode
+2. **Runtime Stage** (`debian:bookworm-slim`): Runs the compiled binary with minimal dependencies
+
+This approach significantly reduces the final image size by excluding the Rust compiler and build artifacts from the production image.
+
+## Docker Details
+
+### Image Specifications
+
+- **Base Image (Builder)**: `rust:latest` - Used to compile the project
+- **Base Image (Runtime)**: `debian:bookworm-slim` - Lightweight Debian image for production
+- **Exposed Port**: 8080 (TCP)
+- **Working Directory**: `/app`
+
+### Building Options
+
+For faster builds during development, you can use a custom Dockerfile. However, the default setup is optimized for production deployment.
+
+### Testing with Docker
+
+To test the containerized server:
+
+```bash
+# Build and run in one command
+docker run -p 8080:8080 $(docker build -q .)
+```
+
+Or use the published image:
+
+```bash
+docker run -p 8080:8080 rust-networking
+```
+
+Then test with telnet, netcat, or curl as described in the Testing section.
+
+### Network Considerations
+
+- The server inside the Docker container listens on `127.0.0.1:8080`
+- When accessed from outside the container, use `localhost:8080` or your machine's IP address
+- The `-p 8080:8080` flag maps port 8080 from the container to your host machine
 
 ## Testing
 
